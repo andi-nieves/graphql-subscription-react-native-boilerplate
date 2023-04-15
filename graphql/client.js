@@ -3,13 +3,15 @@ import { ApolloProvider, ApolloClient, InMemoryCache , split, HttpLink } from '@
 import { getMainDefinition } from '@apollo/client/utilities';
 import { WebSocketLink } from 'apollo-link-ws';
 
+const SERVER_ADDED = '192.168.254.131:4000';
+
 const httpLink = new HttpLink({
-  uri: 'http://192.168.254.103:4000/graphql'
+  uri: `http://${SERVER_ADDED}/graphql`
 });
 
 
 const wsLink = new WebSocketLink({
-  uri: 'ws://192.168.254.103:4000/graphql',
+  uri: `ws://${SERVER_ADDED}/graphql`,
   options: {
     reconnect: true,
   },
@@ -18,7 +20,6 @@ const wsLink = new WebSocketLink({
 const splitLink = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
-    console.log('de', definition)
     return (
       definition.kind === 'OperationDefinition' &&
       definition.operation === 'subscription'
