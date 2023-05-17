@@ -16,6 +16,8 @@ import {
   View,
   ActivityIndicator,
   TextInput,
+  Image,
+  PermissionsAndroid
 } from "react-native";
 
 import {
@@ -33,9 +35,14 @@ import { SwipeablePanel } from "rn-swipeable-panel";
 import { BUS_LIST_QUERY } from "./graphql/BUS_LIST_QUERY";
 import { SUBSCRIPTION } from "./graphql/SUBSCRIPTION";
 import mapStyle from "./config/mapStyles/blue.json";
+import img from './assets/sil.jpg'
 
 import BusMarker from "./components/BusMarker";
 import { uniqBy, get, groupBy, orderBy, map } from "lodash";
+import MapViewDirections from 'react-native-maps-directions';
+import MapContext from "./config/Context";
+
+import { SERVER_ADDED } from "./graphql/client"
 
 const defaultRegion = {
   latitude: 15.58775,
@@ -60,6 +67,31 @@ const ItemData = ({ label, value }) => (
   </Text>
 );
 
+const requestLocationPermission = async () => {
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      {
+        title: 'Geolocation Permission',
+        message: 'Can we access your location?',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
+    );
+    console.log('granted', granted);
+    if (granted === 'granted') {
+      console.log('You can use Geolocation');
+      return true;
+    } else {
+      console.log('You cannot use Geolocation');
+      return false;
+    }
+  } catch (err) {
+    return false;
+  }
+};
+
 function App() {
   const { data, loading, error } = useQuery(BUS_LIST_QUERY);
   
@@ -74,12 +106,17 @@ function App() {
   const [selected, setSelected] = useState();
 
   useEffect(() => {
+    requestLocationPermission().then((res) => {
+      console.log('e', res)
+    })
+   
+  }, [])
+  useEffect(() => {
     if (data) {
       setList(data.allBus)
     }
   }, [data]);
-
-  console.log("list", list.filter(a => a.bus_id === "2725").length)
+  
   const isDarkMode = true; //useColorScheme() === "dark";
 
   const backgroundStyle = {
@@ -102,17 +139,30 @@ function App() {
         barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <View style={styles.container}>
-        <MapView
-          provider={PROVIDER_GOOGLE} // remove if not using Google Maps
-          style={styles.map}
-          region={defaultRegion}
-          camera={Camera}
-          customMapStyle={mapStyle}
-        >
-          <BusMarker data={[...list]} setSelected={setSelected} />
-        </MapView>
-      </View>
+      <MapContext.Provider value={{ selected, setSelected }}>
+        <View style={styles.container}>
+          <MapView
+            provider={PROVIDER_GOOGLE} // remove if not using Google Maps
+            style={styles.map}
+            region={defaultRegion}
+            camera={Camera}
+            customMapStyle={mapStyle}
+            showsUserLocation={true}
+            followsUserLocation={true}
+          >
+            <BusMarker data={[...list]} setSelected={setSelected} selected={selected} />
+            {selected && <MapViewDirections
+                origin={selected.arrival}
+                destination={selected.departure}
+                apikey={'AIzaSyDI9qW7VwEn8bSc2UrxbvXxAlYs2C-V0Ps'}
+                strokeWidth={3}
+                strokeColor="hotpink"
+            />}
+            
+          </MapView>
+        </View>
+      </MapContext.Provider>
+      
       <View
         style={{ position: "absolute", top: 10, width: "100%", zIndex: 100 }}
       >
@@ -135,26 +185,59 @@ function App() {
       <SwipeablePanel
         fullWidth
         isActive={selected ? true : false}
-        onClose={() => setSelected(null)}
+        // onClose={() => setSelected(null)}
         style={{ zIndex: 9999 }}
-        closeOnTouchOutside={true}
+        showCloseButton = {true}
+        onClose={() => setSelected(null)}
+        onPressCloseButton={() => setSelected(null)}
+        // closeOnTouchOutside={true}
+        allowTouchOutside={true}
       >
         <View style={{ padding: 15 }}>
           <Text
             style={{
-              color: "#333",
+              color: "#29446b",
               fontWeight: "bold",
-              fontSize: 16,
+              fontSize: 20,
               marginBottom: 10,
             }}
           >
             Bus Info
           </Text>
-          <ItemData label="ID" value={selected?.bus_id} />
-          <ItemData label="Bus Name" value={selected?.bus_name} />
-          <ItemData label="Passenger" value={selected?.passenger_count} />
-          <ItemData label="Departure" value={selected?.departure} />
-          <ItemData label="Arrival" value={selected?.arrival} />
+          <View style={{ marginTop: 10, flexDirection: "row" }}>
+            <View style={{ height: 60, width: 60, backgroundColor: "#FAFAFA", marginRight: 10}}>
+              <Image source={{ uri: `http://${SERVER_ADDED}/images/bus-${selected?.id}.png?${Date.now()}`}} style={{ height: 60, width: 60 }} />
+            </View>
+            <View>
+              <ItemData label="ID" value={selected?.bus_id} />
+              <ItemData label="Bus Name" value={selected?.bus_name} />
+              <ItemData label="Passenger" value={(selected?.passenger_count || 0) + "/45"} />
+              <ItemData label="Departure" value={selected?.departure} />
+              <ItemData label="Arrival" value={selected?.arrival} />
+            </View>
+            
+          </View>
+          
+          
+          <View style={{ marginTop: 10, flexDirection: "row" }}>
+            <View style={{ height: 60, width: 60, backgroundColor: "#FAFAFA", marginRight: 10}}>
+              <Image source={{ uri: `http://${SERVER_ADDED}/images/driver-${selected?.id}.png?${Date.now()}`}} style={{ height: 60, width: 60 }} />
+            </View>
+            <View>
+              <ItemData label="Driver" value={selected?.driver_name} />
+              <ItemData label="Contact Number" value={selected?.driver_contact} />
+            </View>
+          </View>
+
+          <View style={{ marginTop: 10, flexDirection: "row" }}>
+            <View style={{ height: 60, width: 60, backgroundColor: "#FAFAFA", marginRight: 10}}>
+              <Image source={{ uri: `http://${SERVER_ADDED}/images/conductor-${selected?.id}.png?${Date.now()}`}} style={{ height: 60, width: 60 }} />
+            </View>
+            <View>
+              <ItemData label="Conductor" value={selected?.conductor_name} />
+              <ItemData label="Contact Number" value={selected?.conductor_contact} />
+            </View>
+          </View>
         </View>
       </SwipeablePanel>
     </SafeAreaView>
