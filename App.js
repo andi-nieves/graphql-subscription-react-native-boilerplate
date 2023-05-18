@@ -6,13 +6,12 @@
  */
 
 import React, { useEffect, useState } from "react";
+import SearchableDropdown from 'react-native-searchable-dropdown';
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
   ActivityIndicator,
   TextInput,
@@ -22,12 +21,8 @@ import {
 
 import {
   Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
 } from "react-native/Libraries/NewAppScreen";
-import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 
 import { useQuery, useSubscription } from "@apollo/client";
 import { SwipeablePanel } from "rn-swipeable-panel";
@@ -35,7 +30,6 @@ import { SwipeablePanel } from "rn-swipeable-panel";
 import { BUS_LIST_QUERY } from "./graphql/BUS_LIST_QUERY";
 import { SUBSCRIPTION } from "./graphql/SUBSCRIPTION";
 import mapStyle from "./config/mapStyles/blue.json";
-import img from './assets/sil.jpg'
 
 import BusMarker from "./components/BusMarker";
 import { uniqBy, get, groupBy, orderBy, map } from "lodash";
