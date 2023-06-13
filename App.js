@@ -271,7 +271,7 @@ function App() {
 
           <View style={{ marginTop: 10, flexDirection: "row" }}>
             <View style={{ height: 60, width: 60, backgroundColor: "#FAFAFA", marginRight: 10}}>
-              <Image source={{ uri: `http://${SERVER_ADDED}/images/conductor-${selected?.id}.png?${Date.now()}`}} style={{ height: 60, width: 60 }} />
+              <Image source={{ uri: `http://${SERVER_ADDED}/images/conductor-${selected?.id}.png?${selected?.createdAt}`}} style={{ height: 60, width: 60 }} />
             </View>
             <View>
               <ItemData label="Conductor" value={selected?.conductor_name} />
