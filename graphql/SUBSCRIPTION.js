@@ -27,7 +27,9 @@ export const UPDATE_SUBSCRIPTION = gql`
       bus_name
       passenger_count
       departure
+      departure_time
       arrival
+      arrival_time
       createdAt
       updatedAt
       driver_name

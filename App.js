@@ -173,8 +173,8 @@ function App() {
           >
             <BusMarker data={[...list]} />
             {selected && <MapViewDirections
-                origin={selected.arrival}
-                destination={selected.departure}
+                origin={`${selected.arrival}, Philippines`}
+                destination={`${selected.departure}, Philippines`}
                 apikey={'AIzaSyDI9qW7VwEn8bSc2UrxbvXxAlYs2C-V0Ps'}
                 strokeWidth={3}
                 strokeColor="hotpink"
@@ -216,7 +216,9 @@ function App() {
                 <Text style={{ color: "#333"}}>Bus #: <Text style={{ fontWeight: "bold" }}>{item.bus_id}</Text></Text>
                 <Text style={{ color: "#333"}}>Bus Name: <Text style={{ fontWeight: "bold" }}>{item.bus_name}</Text></Text>
                 <Text style={{ color: "#333"}}>Origin: <Text style={{ fontWeight: "bold" }}>{item.arrival}</Text></Text>
+                <Text style={{ color: "#333"}}>Time of arrival: <Text style={{ fontWeight: "bold" }}>{item.arrival_time}</Text></Text>
                 <Text style={{ color: "#333"}}>Destination: <Text style={{ fontWeight: "bold" }}>{item.departure}</Text></Text>
+                <Text style={{ color: "#333"}}>Destination ETA: <Text style={{ fontWeight: "bold" }}>{item.arrival_time}</Text></Text>
           </TouchableOpacity>) : <Text style={{ color: "#333"}}>No item found</Text>}
         </ScrollView>}
       </View>
@@ -244,20 +246,22 @@ function App() {
           </Text>
           <View style={{ marginTop: 10, flexDirection: "row" }}>
             <View style={{ height: 60, width: 60, backgroundColor: "#FAFAFA", marginRight: 10}}>
-              <Image source={{ uri: `http://${SERVER_ADDED}/images/bus-${selected?.id}.png?${Date.now()}`}} style={{ height: 60, width: 60 }} />
+              <Image source={{ uri: `http://${SERVER_ADDED}/images/bus-${selected?.id}.png?${selected?.createdAt}`}} style={{ height: 60, width: 60 }} />
             </View>
             <View>
               <ItemData label="ID" value={selected?.bus_id} />
               <ItemData label="Bus Name" value={selected?.bus_name} />
               <ItemData label="Passenger" value={(selected?.passenger_count || 0) + "/45"} />
-              <ItemData label="Departure" value={selected?.departure} />
-              <ItemData label="Arrival" value={selected?.arrival} />
+              <ItemData label="Origin" value={selected?.arrival} />
+              <ItemData label="Departure Time" value={selected?.arrival_time} />
+              <ItemData label="Destination" value={selected?.departure} />
+              <ItemData label="Arrival Time" value={selected?.departure_time} />
             </View>
           </View>
           
           <View style={{ marginTop: 10, flexDirection: "row" }}>
             <View style={{ height: 60, width: 60, backgroundColor: "#FAFAFA", marginRight: 10}}>
-              <Image source={{ uri: `http://${SERVER_ADDED}/images/driver-${selected?.id}.png?${Date.now()}`}} style={{ height: 60, width: 60 }} />
+              <Image source={{ uri: `http://${SERVER_ADDED}/images/driver-${selected?.id}.png?${selected?.createdAt}`}} style={{ height: 60, width: 60 }} />
             </View>
             <View>
               <ItemData label="Driver" value={selected?.driver_name} />

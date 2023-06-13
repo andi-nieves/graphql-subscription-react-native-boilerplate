@@ -8,13 +8,16 @@ export const BUS_LIST_QUERY = gql`
       bus_name
       passenger_count
       departure
+      departure_time
       arrival
+      arrival_time
       createdAt
       updatedAt
       driver_name
       driver_contact
       conductor_name
       conductor_contact
+      createdAt
     }
   }
 `;
