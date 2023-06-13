@@ -42,8 +42,7 @@ const ItemMarker = ({ item, onClick }) => {
   const [bus, setBus] = useState();
   // const [selected, setSelected] = useState();
   const [coordinate, setCoordinate] = useState();
-  const { selected, setSelected } = useContext(MapContext)
-  console.log('a', selected)
+  const { selected, setSelected, list, setList } = useContext(MapContext)
   const { data, loading, error } = useQuery(BUS_QUERY, {
     variables: { bus_id: item.bus_id },
   });
@@ -99,9 +98,18 @@ const ItemMarker = ({ item, onClick }) => {
   //   }
   // }, [bus])
   useEffect(() => {
-    // console.log('dddd', data)
-    if (data?.coordinates) {
+    if (data?.coordinates[0]?.bus_id) {
       setCoordinate(data.coordinates[0]);
+      // const index = list.findIndex(item => item.bus_id === data.coordinates[0].bus_id)
+      // const listRes = list.map(item => {
+      //   if (item.bus_id == data.coordinates[0].bus_id) {
+      //     return { ...item, coordinates: data.coordinates[0]}
+      //   } else {
+      //     return item
+      //   }
+        
+      // })
+      // setList([...listRes])
     }
   }, [data]);
   // useEffect(() => {

@@ -37,6 +37,13 @@ export const UPDATE_SUBSCRIPTION = gql`
     }
   }
 `;
+export const DELETE_SUBSCRIPTION = gql`
+  subscription {
+    deleteBus {
+      bus_id
+    }
+  }
+`;
 
 export const COORDINATE_ADDED_SUBSCRIPTION = gql`
   subscription Coordinates($bus_id:String!) {

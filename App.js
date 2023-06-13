@@ -5,8 +5,7 @@
  * @format
  */
 
-import React, { useEffect, useState } from "react";
-import SearchableDropdown from 'react-native-searchable-dropdown';
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   SafeAreaView,
   StatusBar,
@@ -16,7 +15,9 @@ import {
   ActivityIndicator,
   TextInput,
   Image,
-  PermissionsAndroid
+  PermissionsAndroid,
+  TouchableOpacity,
+  ScrollView
 } from "react-native";
 
 import {
@@ -28,11 +29,11 @@ import { useQuery, useSubscription } from "@apollo/client";
 import { SwipeablePanel } from "rn-swipeable-panel";
 
 import { BUS_LIST_QUERY } from "./graphql/BUS_LIST_QUERY";
-import { SUBSCRIPTION } from "./graphql/SUBSCRIPTION";
+import { SUBSCRIPTION, DELETE_SUBSCRIPTION } from "./graphql/SUBSCRIPTION";
 import mapStyle from "./config/mapStyles/blue.json";
 
 import BusMarker from "./components/BusMarker";
-import { uniqBy, get, groupBy, orderBy, map } from "lodash";
+import { uniqBy, get, groupBy, orderBy, map, filter, includes } from "lodash";
 import MapViewDirections from 'react-native-maps-directions';
 import MapContext from "./config/Context";
 
@@ -87,8 +88,10 @@ const requestLocationPermission = async () => {
 };
 
 function App() {
+  const mapRef = useRef()
   const { data, loading, error } = useQuery(BUS_LIST_QUERY);
-  
+  const [searchResult, setSearch] = useState();
+  const [searchTouch, setSearchTouch] = useState();
   const [list, setList] = useState([]);
   const { data: subData } = useSubscription(SUBSCRIPTION, { onData: ({data: { data : { bus }}}) => {
     if (bus) {
@@ -96,6 +99,16 @@ function App() {
     }
     return;
   }});
+  const { data: newCoordinate } = useSubscription(
+    DELETE_SUBSCRIPTION,
+    {
+      onData: ({
+        data
+      }) => {
+        setList([...list.filter(item => item.bus_id !== data?.data?.deleteBus?.bus_id)])
+        return;
+      },
+    })
 
   const [selected, setSelected] = useState();
 
@@ -103,13 +116,23 @@ function App() {
     requestLocationPermission().then((res) => {
       console.log('e', res)
     })
-   
   }, [])
   useEffect(() => {
     if (data) {
       setList(data.allBus)
+      setSearch(data.allBus)
     }
   }, [data]);
+
+  const onChangeText = (string) =>  {
+    setSearch(filter(list, (e) => includes(e.bus_name.toLowerCase(), string.toLowerCase()) || includes(e.bus_id.toLowerCase(), string.toLowerCase())))
+  }
+
+  const onSearchSelected = (item) => {
+    // mapRef.current.animateToRegion()
+    setSearchTouch(false)
+    setSelected(item)
+  }
   
   const isDarkMode = true; //useColorScheme() === "dark";
 
@@ -127,24 +150,28 @@ function App() {
     );
   }
 
+
   return (
     <SafeAreaView style={backgroundStyle}>
       <StatusBar
         barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <MapContext.Provider value={{ selected, setSelected }}>
+      <MapContext.Provider value={{ selected, setSelected, list, setList }}>
         <View style={styles.container}>
           <MapView
-            provider={PROVIDER_GOOGLE} // remove if not using Google Maps
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
             style={styles.map}
             region={defaultRegion}
             camera={Camera}
             customMapStyle={mapStyle}
             showsUserLocation={true}
             followsUserLocation={true}
+            showsCompass={false}
+            showsMyLocationButton={false}
           >
-            <BusMarker data={[...list]} setSelected={setSelected} selected={selected} />
+            <BusMarker data={[...list]} />
             {selected && <MapViewDirections
                 origin={selected.arrival}
                 destination={selected.departure}
@@ -158,12 +185,11 @@ function App() {
       </MapContext.Provider>
       
       <View
-        style={{ position: "absolute", top: 10, width: "100%", zIndex: 100 }}
+        style={{ position: "absolute", top: 10, width: "100%", zIndex: 999, padding: 10 }}
       >
         <TextInput
           style={{
             borderRadius: 10,
-            margin: 10,
             color: "#333",
             borderColor: "rgba(255, 255, 255, 0.6)",
             backgroundColor: "rgba(255, 255, 255, 0.9)",
@@ -171,10 +197,28 @@ function App() {
             height: 45,
             paddingHorizontal: 10,
             fontSize: 18,
+            marginBottom: 10
           }}
           placeholder={"Search"}
           placeholderTextColor={"rgba(100, 100, 100, 0.4)"}
+          onChangeText={onChangeText}
+          onFocus={() => setSearchTouch(true)}
         />
+        {(searchTouch && searchResult) && <ScrollView style={{ 
+            padding: 10,
+            borderRadius: 10,
+            borderColor: "rgba(255, 255, 255, 0.6)",
+            backgroundColor: "#FFF",
+            color: "#333",
+            zIndex: 1000,
+            maxHeight: 200 }}>
+              {searchResult.length > 0 ? searchResult.map(item => <TouchableOpacity key={`touch-${item.id}`} onPress={() => onSearchSelected(item)} style={{ marginBottom: 5, flex: 1, width: "100%", backgroundColor: "transparent" }}>
+                <Text style={{ color: "#333"}}>Bus #: <Text style={{ fontWeight: "bold" }}>{item.bus_id}</Text></Text>
+                <Text style={{ color: "#333"}}>Bus Name: <Text style={{ fontWeight: "bold" }}>{item.bus_name}</Text></Text>
+                <Text style={{ color: "#333"}}>Origin: <Text style={{ fontWeight: "bold" }}>{item.arrival}</Text></Text>
+                <Text style={{ color: "#333"}}>Destination: <Text style={{ fontWeight: "bold" }}>{item.departure}</Text></Text>
+          </TouchableOpacity>) : <Text style={{ color: "#333"}}>No item found</Text>}
+        </ScrollView>}
       </View>
       <SwipeablePanel
         fullWidth
@@ -209,9 +253,7 @@ function App() {
               <ItemData label="Departure" value={selected?.departure} />
               <ItemData label="Arrival" value={selected?.arrival} />
             </View>
-            
           </View>
-          
           
           <View style={{ marginTop: 10, flexDirection: "row" }}>
             <View style={{ height: 60, width: 60, backgroundColor: "#FAFAFA", marginRight: 10}}>
