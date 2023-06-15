@@ -36,6 +36,7 @@ import BusMarker from "./components/BusMarker";
 import { uniqBy, get, groupBy, orderBy, map, filter, includes } from "lodash";
 import MapViewDirections from 'react-native-maps-directions';
 import MapContext from "./config/Context";
+import Logo from "./assets/logo.jpg"
 
 import { SERVER_ADDED } from "./graphql/client"
 
@@ -144,8 +145,13 @@ function App() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={{ color: "rgba(255, 255, 255, 0.6)", position: "absolute", bottom: 15 }}>Bus Tracker App v1</Text>
+        <View style={{ height: 200, width: 200, borderRadius: 100, overflow: 'hidden' }}>
+          <Image source={Logo} style={{ height: 200, width: 200 }} />
+        </View>
+        <View style={{position: "absolute", bottom: 15, flexDirection: "column", flex: 1 }}>
         <ActivityIndicator size="small" color="rgba(255, 255, 255, 0.6)" />
+        <Text style={{ color: "rgba(255, 255, 255, 0.6)"}}>Bus Tracker App v1</Text>
+        </View>
       </View>
     );
   }
